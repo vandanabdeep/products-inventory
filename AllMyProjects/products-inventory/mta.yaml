@@ -1,0 +1,84 @@
+_schema-version: "3.2"
+ID: tectedmta
+description: Fiori elements app
+version: 0.0.1
+modules:
+- name: tectedmta-router
+  type: approuter.nodejs
+  path: cf/router
+  requires:
+  - name: tectedmta-html5-repo-runtime
+  - name: tectedmta-uaa
+  - name: tectedmta-destination
+    group: destinations
+    properties:
+      forwardAuthToken: false
+      name: ui5
+      url: https://ui5.sap.com
+  - name: tectedmta-connectivity
+  parameters:
+    disk-quota: 256M
+    memory: 256M
+    routes:
+    - route: https://tectedmta-${org}-${space}.${default-domain}
+- name: tectedmta-deployer
+  type: com.sap.application.content
+  path: .
+  requires:
+  - name: tectedmta-html5-repo-host
+    parameters:
+      content-target: true
+  build-parameters:
+    build-result: resources
+    requires:
+    - artifacts:
+      - productsinventoryproductsinventory.zip
+      name: productsinventoryproductsinventory
+      target-path: resources/
+- name: productsinventoryproductsinventory
+  type: html5
+  path: productsinventory
+  build-parameters:
+    build-result: dist
+    builder: custom
+    commands:
+    - npm install
+    - npm run build:cf
+    supported-platforms: []
+resources:
+- name: tectedmta-uaa
+  type: org.cloudfoundry.managed-service
+  parameters:
+    config:
+      tenant-mode: dedicated
+      xsappname: tectedmta-${org}
+    service: xsuaa
+    service-plan: application
+- name: tectedmta-html5-repo-runtime
+  type: org.cloudfoundry.managed-service
+  parameters:
+    service: html5-apps-repo
+    service-plan: app-runtime
+- name: tectedmta-destination
+  type: org.cloudfoundry.managed-service
+  parameters:
+    service: destination
+    service-plan: lite
+- name: tectedmta-html5-repo-host
+  type: org.cloudfoundry.managed-service
+  parameters:
+    service: html5-apps-repo
+    service-plan: app-host
+- name: tectedmta-connectivity
+  type: org.cloudfoundry.managed-service
+  parameters:
+    service: connectivity
+    service-plan: lite
+parameters:
+  deploy_mode: html5-repo
+  enable-parallel-deployments: true
+build-parameters:
+  before-all:
+  - builder: custom
+    commands:
+    - npm install
